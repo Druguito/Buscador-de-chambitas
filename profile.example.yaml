@@ -1,0 +1,47 @@
+# Copia este archivo a profile.yaml y edítalo con lo tuyo.
+#   cp profile.example.yaml profile.yaml   (o cópialo a mano)
+
+nombre: Tu Nombre
+
+# Cargos / tecnologías con los que quieres encontrar ofertas (una búsqueda c/u).
+busquedas:
+  - Laravel
+  - PHP
+  - Backend Developer
+  - Full Stack
+
+# Tus skills. Cada una que aparezca en una oferta le suma puntaje.
+skills:
+  - PHP
+  - Laravel
+  - PostgreSQL
+  - React
+  - Docker
+  - TypeScript
+  - Node.js
+  - REST
+  - SQL
+  - Git
+
+# Si una oferta contiene alguna de estas palabras, se descarta sola.
+evitar:
+  - Ventas
+  - Comercial
+  - Call center
+
+preferencias:
+  solo_remoto: false
+  ubicaciones:
+    - Santiago
+    - Remoto
+    - Chile
+
+# Puntaje mínimo (cuántas skills debe tener al menos) para guardarla.
+puntaje_minimo: 1
+
+# Qué páginas usar (pon false a las que no quieras).
+fuentes:
+  getonboard: true
+  chiletrabajos: true
+  computrabajo: true
+  linkedin: false

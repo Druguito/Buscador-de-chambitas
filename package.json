@@ -1,0 +1,21 @@
+{
+  "name": "job-hunter",
+  "version": "2.0.0",
+  "description": "Buscador personal de ofertas de empleo con tracking de postulaciones (sin APIs de pago)",
+  "main": "dist/buscar.js",
+  "scripts": {
+    "buscar": "ts-node src/buscar.ts",
+    "panel": "ts-node src/panel.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "playwright": "^1.44.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.12.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
