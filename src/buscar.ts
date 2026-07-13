@@ -1,15 +1,19 @@
 import { cargarPerfil } from './perfil';
+import { perfilArg } from './args';
 import { puntuar, aOfertaGuardable } from './match';
 import { agregarNuevas } from './store';
 import { OfertaCruda, Oferta } from './tipos';
 import { scrapeGetOnBoard } from './fuentes/getonboard';
 import { scrapeComputrabajo } from './fuentes/computrabajo';
 import { scrapeChileTrabajos } from './fuentes/chiletrabajos';
+import { scrapeTrabajando } from './fuentes/trabajando';
 import { scrapeLinkedIn } from './fuentes/linkedin';
 
 async function main() {
-  const perfil = cargarPerfil();
+  const nombrePerfil = perfilArg();
+  const perfil = cargarPerfil(nombrePerfil);
   console.log(`\n🔎 Buscando chambas para ${perfil.nombre}`);
+  if (nombrePerfil) console.log(`   Perfil: ${nombrePerfil} (data/ofertas.${nombrePerfil}.json)`);
   console.log(`   Búsquedas: ${perfil.busquedas.join(', ')}\n`);
 
   const crudas: OfertaCruda[] = [];
@@ -26,6 +30,10 @@ async function main() {
   if (perfil.fuentes.chiletrabajos) {
     console.log('→ ChileTrabajos...');
     crudas.push(...(await scrapeChileTrabajos(perfil.busquedas)));
+  }
+  if (perfil.fuentes.trabajando) {
+    console.log('→ Trabajando.com...');
+    crudas.push(...(await scrapeTrabajando(perfil.busquedas)));
   }
   if (perfil.fuentes.linkedin) {
     console.log('→ LinkedIn...');
@@ -47,10 +55,13 @@ async function main() {
   // Ordenar por puntaje (mejores primero) antes de guardar.
   aceptadas.sort((a, b) => b.puntaje - a.puntaje);
 
-  const { agregadas, total } = agregarNuevas(aceptadas);
+  const { agregadas, total, duplicadas } = agregarNuevas(aceptadas, nombrePerfil);
 
   console.log(`\n✅ Listo:`);
   console.log(`   ${aceptadas.length} calzaron con tu perfil (${descartadas} descartadas por filtro)`);
+  if (duplicadas > 0) {
+    console.log(`   ${duplicadas} eran la misma oferta en otra página (no se repiten)`);
+  }
   console.log(`   ${agregadas} son NUEVAS (no las habías visto antes)`);
   console.log(`   ${total} ofertas en total en tu lista\n`);
   if (agregadas > 0) {

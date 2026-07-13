@@ -3,17 +3,25 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { Perfil } from './tipos';
 
-const RUTA_PERFIL = path.join(process.cwd(), 'profile.yaml');
+// Nombre del archivo de perfil según el perfil elegido (undefined = el default).
+//   cargarPerfil()        → profile.yaml
+//   cargarPerfil('qa')    → profile.qa.yaml
+function rutaPerfil(perfil?: string): string {
+  const archivo = perfil ? `profile.${perfil}.yaml` : 'profile.yaml';
+  return path.join(process.cwd(), archivo);
+}
 
-// Carga y valida (suavemente) el profile.yaml del usuario.
-export function cargarPerfil(): Perfil {
-  if (!fs.existsSync(RUTA_PERFIL)) {
+// Carga y valida (suavemente) el profile del usuario.
+export function cargarPerfil(perfil?: string): Perfil {
+  const ruta = rutaPerfil(perfil);
+  if (!fs.existsSync(ruta)) {
+    const archivo = perfil ? `profile.${perfil}.yaml` : 'profile.yaml';
     throw new Error(
-      'No encontré profile.yaml. Copia profile.example.yaml a profile.yaml y edítalo.'
+      `No encontré ${archivo}. Copia profile.example.yaml a ${archivo} y edítalo.`
     );
   }
 
-  const bruto = yaml.load(fs.readFileSync(RUTA_PERFIL, 'utf8')) as Partial<Perfil>;
+  const bruto = yaml.load(fs.readFileSync(ruta, 'utf8')) as Partial<Perfil>;
 
   return {
     nombre: bruto.nombre ?? 'Sin nombre',

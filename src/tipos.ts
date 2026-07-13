@@ -4,7 +4,7 @@ export type Estado = 'nueva' | 'guardada' | 'postulada' | 'descartada';
 
 // Oferta tal como la devuelve una fuente, antes de puntuar y guardar.
 export interface OfertaCruda {
-  fuente: string;        // getonboard | chiletrabajos | computrabajo | linkedin
+  fuente: string;        // getonboard | chiletrabajos | computrabajo | trabajando | linkedin
   titulo: string;
   empresa: string;
   ubicacion: string;

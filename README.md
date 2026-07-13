@@ -7,6 +7,10 @@ marcar cuáles ya postulaste. **Sin APIs de pago, sin base de datos, sin Docker.
 
 1. `npm run buscar` → entra a las páginas, trae ofertas, las filtra por tus
    palabras clave y guarda las **nuevas** en `data/ofertas.json`.
+
+   (cd C:\Users\Desarrollo-01\Documents\mati\Buscador-de-chambitas
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned   # solo la 1ra vez, pones S
+npm run buscar)
 2. `npm run panel` → abre una página web local donde ves las ofertas y las
    marcas: **Postular** (abre el link y la marca como postulada), **Guardar** o
    **Descartar**. Lo que descartas o postulas no vuelve a salir en "Nuevas".
@@ -39,13 +43,40 @@ Edita **`profile.yaml`** (no necesitas tocar código):
 | GetOnBoard    | API     | ✅ La más confiable (tech/remoto).                  |
 | Computrabajo  | Navegador | ✅ Funciona (mucha oferta en Chile).              |
 | ChileTrabajos | Navegador | ⚠️ Funciona pero su buscador es impreciso; el filtro limpia el ruido. |
+| Trabajando.com | Navegador | ✅ Funciona (oferta local en Chile).             |
 | LinkedIn      | Web pública (endpoint jobs-guest, sin login) | ✅ Funciona y trae ofertas muy relevantes. Ojo: si lo corres muchas veces seguidas te puede dar error 429 (LinkedIn limita peticiones). Para un par de corridas al día, va bien. |
+
+## Perfiles múltiples (opcional, tipo "por usuario")
+
+Puedes tener varios perfiles, **cada uno con su propia lista** de ofertas (no se
+mezclan entre sí). Útil para separar búsquedas (ej. "Backend" vs "QA") o para un
+amigo. Se elige con `--perfil <nombre>`:
+
+```powershell
+# Perfil por defecto (como siempre): profile.yaml → data/ofertas.json
+npm run buscar
+npm run panel
+
+# Otro perfil llamado "qa": profile.qa.yaml → data/ofertas.qa.json
+npm run buscar -- --perfil qa
+npm run panel -- --perfil qa
+```
+
+Para crear un perfil nuevo, copia `profile.example.yaml` a `profile.qa.yaml`
+(o el nombre que quieras) y edítalo. La primera vez que corras `buscar` con ese
+perfil, se crea su `data/ofertas.<nombre>.json` solo. Cambiar las skills de un
+perfil **no toca** las listas de los otros.
+
+> El panel usa el puerto fijo 4321, así que revisa **un perfil a la vez**.
 
 ## Comandos
 
 ```powershell
-npm run buscar   # busca ofertas nuevas
+npm run buscar   # busca ofertas nuevas (perfil por defecto)
 npm run panel    # abre el panel para revisarlas
+
+npm run buscar -- --perfil <nombre>   # usa profile.<nombre>.yaml
+npm run panel  -- --perfil <nombre>   # revisa esa lista aparte
 ```
 
 > Nota: si una página cambia su diseño, su scraper puede dejar de traer ofertas.

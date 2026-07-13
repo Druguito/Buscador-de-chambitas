@@ -33,7 +33,10 @@ async function buscarQuery(query: string, porPagina = 50): Promise<OfertaCruda[]
 
   return items.map((it): OfertaCruda => {
     const a = it.attributes ?? {};
-    const empresa = textoDesde(a.company?.data?.name ?? a.company?.name ?? a.company);
+    // El nombre viene en company.data.attributes.name (con expand=["company"]).
+    const empresa = textoDesde(
+      a.company?.data?.attributes?.name ?? a.company?.data?.name ?? a.company?.name ?? a.company
+    );
     const ciudades = textoDesde(a.location_cities);
     const remoto = a.remote === true || textoDesde(a.remote_modality).toLowerCase().includes('remote');
 

@@ -44,6 +44,20 @@ va contra la decisión explícita del dueño.
 
 Config en `profile.yaml` (copiar desde `profile.example.yaml` la primera vez).
 
+### Perfiles múltiples (tipo "por usuario")
+
+Se puede tener más de un perfil, cada uno con su **propia lista de ofertas** (no se
+mezclan). Se elige con `--perfil <nombre>`:
+
+- `npm run buscar` → `profile.yaml` + `data/ofertas.json` (el default).
+- `npm run buscar -- --perfil qa` → `profile.qa.yaml` + `data/ofertas.qa.json`.
+- `npm run panel -- --perfil qa` → sirve solo esa lista.
+
+El parseo del argumento vive en `src/args.ts` (`perfilArg()`), y tanto `perfil.ts`
+como `store.ts` reciben el nombre para armar la ruta del archivo. El nombre se
+sanea a `[a-z0-9_-]` (no se aceptan rutas ni símbolos raros). El panel corre en el
+puerto fijo 4321, así que se usa **un panel a la vez** (no dos perfiles en paralelo).
+
 ## Estructura del código (`src/`)
 
 - `buscar.ts` — orquestador de `npm run buscar`. Corre las fuentes activas, filtra, guarda.
@@ -54,12 +68,20 @@ Config en `profile.yaml` (copiar desde `profile.example.yaml` la primera vez).
   `solo_remoto`, `puntaje_minimo`. En título las skills valen 2, en cuerpo 1.
 - `store.ts` — lee/escribe `data/ofertas.json`. El ID de cada oferta es un hash
   `sha1(fuente + url)`; una oferta es "nueva" si su ID no está aún en el archivo.
+  Además hace **dedupe entre páginas**: `claveContenido()` = `título + empresa`
+  normalizados (sin tildes/mayúsculas/símbolos); si esa huella ya existe, no se
+  agrega aunque venga de otra fuente (la misma chamba en GetOnBoard y Trabajando
+  se guarda una sola vez). Es dedupe hacia adelante: no borra lo ya guardado.
 - `tipos.ts` — tipos compartidos.
 - `fuentes/` — un scraper por página:
   - `getonboard.ts` — API pública JSON gratis. La más confiable.
   - `computrabajo.ts` — Playwright (selector `article.box_offer`). Funciona.
   - `chiletrabajos.ts` — Playwright. Trae resultados pero su buscador es impreciso;
     el filtro de palabras clave limpia el ruido.
+  - `trabajando.ts` — Playwright. El sitio es Nuxt (ofertas renderizadas por JS),
+    selector `div.result-box-container` (título en `h2 a`, empresa `.type`,
+    ubicación `.location`, descripción `.description`). Busca en
+    `/trabajo-empleo/<slug>`.
   - `linkedin.ts` — endpoint público `jobs-guest` vía fetch (sin login). Funciona
     bien pero LinkedIn tira 429 si se corre muchas veces seguidas.
   - `navegador.ts` — helper que abre Edge/Chrome instalado.
@@ -83,7 +105,7 @@ se re-agrega en la próxima búsqueda (su ID ya existe).
 
 ## Estado actual
 
-Funciona de punta a punta con las 4 fuentes activas. Verificado con corridas reales.
+Funciona de punta a punta con las 5 fuentes activas. Verificado con corridas reales.
 Stack: Node + TypeScript + ts-node + Playwright + js-yaml. ~26 paquetes npm.
 
 ## Ideas pendientes (si se retoma)

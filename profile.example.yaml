@@ -1,7 +1,7 @@
 # Copia este archivo a profile.yaml y edítalo con lo tuyo.
 #   cp profile.example.yaml profile.yaml   (o cópialo a mano)
 
-nombre: Tu Nombre
+nombre: Matias Pino
 
 # Cargos / tecnologías con los que quieres encontrar ofertas (una búsqueda c/u).
 busquedas:
@@ -9,6 +9,7 @@ busquedas:
   - PHP
   - Backend Developer
   - Full Stack
+  - QA
 
 # Tus skills. Cada una que aparezca en una oferta le suma puntaje.
 skills:
@@ -35,6 +36,10 @@ preferencias:
     - Santiago
     - Remoto
     - Chile
+    - Concepcion
+    - Talcahuano
+    - Hualpen
+    - Coronel
 
 # Puntaje mínimo (cuántas skills debe tener al menos) para guardarla.
 puntaje_minimo: 1
@@ -44,4 +49,5 @@ fuentes:
   getonboard: true
   chiletrabajos: true
   computrabajo: true
-  linkedin: false
+  trabajando: true
+  linkedin: false   # útil, pero LinkedIn tira 429 si lo corres muchas veces seguidas

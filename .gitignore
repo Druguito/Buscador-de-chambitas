@@ -1,5 +1,12 @@
 node_modules/
 dist/
+
+# Datos personales (uno por perfil) — no se suben.
 data/ofertas.json
+data/ofertas.*.json
+
+# Perfiles del usuario (uno por perfil), pero SÍ subimos el de ejemplo.
 profile.yaml
+profile.*.yaml
+!profile.example.yaml
 
