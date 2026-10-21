@@ -5,6 +5,9 @@ dist/
 data/ofertas.json
 data/ofertas.*.json
 
+# Excel/CSV exportados (datos personales) — no se suben.
+data/*.csv
+
 # Perfiles del usuario (uno por perfil), pero SÍ subimos el de ejemplo.
 profile.yaml
 profile.*.yaml

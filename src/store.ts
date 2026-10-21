@@ -92,7 +92,20 @@ export function cambiarEstado(id: string, estado: Estado, perfil?: string): bool
   const oferta = ofertas.find((o) => o.id === id);
   if (!oferta) return false;
   oferta.estado = estado;
+  // Al decidir (postular/descartar/volver), ya no está "pendiente de confirmar".
+  oferta.visitada = false;
   oferta.actualizada_en = new Date().toISOString();
+  guardar(ofertas, perfil);
+  return true;
+}
+
+// Marca (o desmarca) que el usuario abrió la oferta, para luego preguntarle
+// "¿postulaste?" al volver al panel.
+export function marcarVisitada(id: string, visitada: boolean, perfil?: string): boolean {
+  const ofertas = cargar(perfil);
+  const oferta = ofertas.find((o) => o.id === id);
+  if (!oferta) return false;
+  oferta.visitada = visitada;
   guardar(ofertas, perfil);
   return true;
 }

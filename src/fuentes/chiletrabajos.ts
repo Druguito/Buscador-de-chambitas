@@ -6,43 +6,43 @@ import { conNavegador } from './navegador';
 const BASE = 'https://www.chiletrabajos.cl';
 
 async function buscarQuery(query: string): Promise<OfertaCruda[]> {
-  const url = `${BASE}/trabajos?q=${encodeURIComponent(query)}`;
+  // OJO: la ruta vieja `/trabajos?q=` ahora redirige a /404. La búsqueda real
+  // vive en `/empleos?q=`. Aun así, el buscador de ChileTrabajos es impreciso
+  // (a veces ignora la palabra y trae rubros random); el filtro de skills limpia
+  // ese ruido después.
+  const url = `${BASE}/empleos?q=${encodeURIComponent(query)}`;
   return conNavegador(async (page) => {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page
-      .waitForSelector('.job-item, article, .aviso, .listado-avisos li', { timeout: 12000 })
-      .catch(() => {});
+    await page.waitForSelector('.job-item', { timeout: 12000 }).catch(() => {});
 
-    return page.$$eval(
-      '.job-item, article, .aviso, .listado-avisos li',
-      (nodos, base) => {
-        return nodos
-          .map((n) => {
-            const a = n.querySelector('a[href]') as HTMLAnchorElement | null;
-            const titulo =
-              n.querySelector('h2, h3, .titulo, .job-title')?.textContent?.trim() ??
-              a?.textContent?.trim() ??
-              '';
-            const empresa = n.querySelector('.empresa, .company, .job-company')?.textContent?.trim() ?? '';
-            const ubic = n.querySelector('.ubicacion, .location, .ciudad')?.textContent?.trim() ?? '';
-            const desc = n.querySelector('p, .descripcion, .job-desc')?.textContent?.trim() ?? '';
-            const href = a?.getAttribute('href') ?? '';
-            return {
-              fuente: 'chiletrabajos',
-              titulo,
-              empresa: empresa || 'Empresa no informada',
-              ubicacion: ubic || 'Chile',
-              remoto: /remoto|teletrabajo|home ?office/i.test(`${ubic} ${desc} ${titulo}`),
-              url: href.startsWith('http') ? href : base + href,
-              salario: '',
-              descripcion: desc,
-              tags: [],
-            };
-          })
-          .filter((o) => o.titulo && o.url);
-      },
-      BASE
-    );
+    return page.$$eval('.job-item', (nodos, base) => {
+      return nodos
+        .map((n) => {
+          // Título y link: <h2 class="title"><a href="...">TÍTULO</a></h2>
+          const a = (n.querySelector('h2.title a, h2 a, a[href]') as HTMLAnchorElement | null);
+          const titulo = a?.textContent?.trim() ?? '';
+          // Empresa + ciudad: <h3 class="meta">Empresa, <a>Ciudad</a></h3>
+          const meta = n.querySelector('h3.meta, .meta');
+          const ciudad = meta?.querySelector('a')?.textContent?.trim() ?? '';
+          let empresa = (meta?.textContent ?? '').replace(/\s+/g, ' ').trim();
+          if (ciudad) empresa = empresa.replace(ciudad, '');
+          empresa = empresa.replace(/[,\s]+$/, '').trim();
+          const desc = n.querySelector('.description, .descripcion, p')?.textContent?.trim() ?? '';
+          const href = a?.getAttribute('href') ?? '';
+          return {
+            fuente: 'chiletrabajos',
+            titulo,
+            empresa: empresa || 'Empresa no informada',
+            ubicacion: ciudad || 'Chile',
+            remoto: /remoto|teletrabajo|home ?office/i.test(`${ciudad} ${desc} ${titulo}`),
+            url: href.startsWith('http') ? href : base + href,
+            salario: '',
+            descripcion: desc,
+            tags: [],
+          };
+        })
+        .filter((o) => o.titulo && o.url);
+    }, BASE);
   });
 }
 

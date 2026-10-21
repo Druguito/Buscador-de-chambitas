@@ -7,6 +7,9 @@ import { scrapeGetOnBoard } from './fuentes/getonboard';
 import { scrapeComputrabajo } from './fuentes/computrabajo';
 import { scrapeChileTrabajos } from './fuentes/chiletrabajos';
 import { scrapeTrabajando } from './fuentes/trabajando';
+import { scrapeTrabajoOrg } from './fuentes/trabajoorg';
+import { scrapeLaborum } from './fuentes/laborum';
+import { scrapeBeBee } from './fuentes/bebee';
 import { scrapeLinkedIn } from './fuentes/linkedin';
 
 async function main() {
@@ -34,6 +37,18 @@ async function main() {
   if (perfil.fuentes.trabajando) {
     console.log('→ Trabajando.com...');
     crudas.push(...(await scrapeTrabajando(perfil.busquedas)));
+  }
+  if (perfil.fuentes.trabajoorg) {
+    console.log('→ Trabajo.org...');
+    crudas.push(...(await scrapeTrabajoOrg(perfil.busquedas)));
+  }
+  if (perfil.fuentes.laborum) {
+    console.log('→ Laborum...');
+    crudas.push(...(await scrapeLaborum(perfil.busquedas)));
+  }
+  if (perfil.fuentes.bebee) {
+    console.log('→ beBee...');
+    crudas.push(...(await scrapeBeBee(perfil.busquedas)));
   }
   if (perfil.fuentes.linkedin) {
     console.log('→ LinkedIn...');

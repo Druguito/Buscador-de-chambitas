@@ -23,6 +23,7 @@ export interface Oferta extends OfertaCruda {
   estado: Estado;
   encontrada_en: string;     // ISO date, primera vez que se vio
   actualizada_en: string;    // ISO date, último cambio de estado
+  visitada?: boolean;        // true si ya abrió la oferta (para preguntar "¿postulaste?")
 }
 
 export interface Perfil {

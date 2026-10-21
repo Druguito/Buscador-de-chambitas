@@ -1,9 +1,10 @@
 import http from 'http';
 import { spawn } from 'child_process';
-import { cargar, cambiarEstado } from './store';
+import { cargar, cambiarEstado, marcarVisitada } from './store';
 import { perfilArg } from './args';
 import { Estado } from './tipos';
 import { paginaHtml } from './html';
+import { generarCsv } from './exportar';
 
 const PUERTO = 4321;
 
@@ -38,6 +39,34 @@ const servidor = http.createServer((req, res) => {
   if (req.method === 'GET' && url.pathname === '/api/ofertas') {
     const ofertas = cargar(PERFIL).sort((a, b) => b.puntaje - a.puntaje);
     enviarJson(res, ofertas);
+    return;
+  }
+
+  // Descargar Excel (CSV) con las ofertas.
+  if (req.method === 'GET' && url.pathname === '/api/exportar') {
+    const csv = generarCsv(cargar(PERFIL));
+    const nombre = PERFIL ? `ofertas.${PERFIL}.csv` : 'ofertas.csv';
+    res.writeHead(200, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${nombre}"`,
+    });
+    res.end(csv);
+    return;
+  }
+
+  // Marcar que abrió la oferta (para preguntarle "¿postulaste?" al volver).
+  if (req.method === 'POST' && url.pathname === '/api/visitar') {
+    let cuerpo = '';
+    req.on('data', (c) => (cuerpo += c));
+    req.on('end', () => {
+      try {
+        const { id, visitada } = JSON.parse(cuerpo) as { id: string; visitada: boolean };
+        const ok = marcarVisitada(id, visitada, PERFIL);
+        enviarJson(res, { ok }, ok ? 200 : 404);
+      } catch {
+        enviarJson(res, { ok: false, error: 'JSON inválido' }, 400);
+      }
+    });
     return;
   }
 

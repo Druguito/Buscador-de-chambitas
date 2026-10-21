@@ -29,10 +29,13 @@ export interface Resultado {
 export function puntuar(oferta: OfertaCruda, perfil: Perfil): Resultado {
   const texto = `${oferta.titulo} ${oferta.descripcion} ${oferta.tags.join(' ')} ${oferta.empresa}`;
 
-  // 1) Filtro de exclusión: si contiene algo de "evitar", fuera.
+  // 1) Filtro de exclusión: si el TÍTULO del cargo contiene algo de "evitar", fuera.
+  // OJO: se mira solo el título a propósito. Antes se revisaba todo el aviso y se
+  // botaban chambas buenas ("Desarrollador Back-end Junior") solo porque la
+  // descripción mencionaba de pasada "el área comercial" de la empresa.
   for (const malo of perfil.evitar) {
-    if (contiene(texto, malo)) {
-      return { aceptada: false, motivo: `contiene "${malo}"`, puntaje: 0, coincidencias: [] };
+    if (contiene(oferta.titulo, malo)) {
+      return { aceptada: false, motivo: `el cargo dice "${malo}"`, puntaje: 0, coincidencias: [] };
     }
   }
 

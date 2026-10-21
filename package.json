@@ -6,6 +6,7 @@
   "scripts": {
     "buscar": "ts-node src/buscar.ts",
     "panel": "ts-node src/panel.ts",
+    "exportar": "ts-node src/exportar.ts",
     "build": "tsc"
   },
   "dependencies": {

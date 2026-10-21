@@ -20,6 +20,18 @@ export function paginaHtml(): string {
          cursor:pointer; font-size:13px; border:1px solid var(--line); user-select:none; }
   .tab.activo { background:var(--acc); color:#fff; border-color:var(--acc); }
   .tab .n { opacity:.8; }
+  .buscador { margin-top:12px; display:flex; align-items:center; gap:8px; }
+  .buscador input { flex:1; max-width:420px; padding:9px 14px; border-radius:10px;
+         background:var(--card); border:1px solid var(--line); color:var(--txt); font-size:14px; }
+  .buscador input::placeholder { color:var(--muted); }
+  .buscador .cont { color:var(--muted); font-size:12px; }
+  .sel-orden { padding:8px 10px; border-radius:8px; background:var(--card); color:var(--txt);
+         border:1px solid var(--line); font-size:13px; cursor:pointer; }
+  .btn-excel { margin-left:auto; padding:8px 14px; border-radius:8px; background:rgba(46,204,113,.15);
+         color:#7fe0a5; border:1px solid rgba(46,204,113,.4); font-size:13px; font-weight:600;
+         text-decoration:none; white-space:nowrap; }
+  .btn-excel:hover { background:rgba(46,204,113,.25); }
+  .fecha { color:var(--muted); font-size:11px; white-space:nowrap; }
   main { padding:20px 24px; max-width:960px; margin:0 auto; display:grid; gap:12px; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
   .card .top { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
@@ -33,7 +45,11 @@ export function paginaHtml(): string {
   .score { font-size:22px; font-weight:700; color:var(--acc); white-space:nowrap; }
   .score small { font-size:11px; color:var(--muted); font-weight:400; display:block; text-align:right; }
   .desc { color:var(--muted); font-size:13px; line-height:1.5; max-height:60px; overflow:hidden; }
-  .acciones { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .acciones { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; align-items:center; }
+  .pregunta { font-size:13px; font-weight:600; color:var(--warn); margin-right:2px; }
+  .link-google { align-self:center; margin-left:auto; font-size:12px; color:var(--muted);
+         text-decoration:none; border:1px solid var(--line); padding:6px 10px; border-radius:8px; }
+  .link-google:hover { color:var(--txt); border-color:var(--acc); }
   button { border:none; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }
   .b-post { background:var(--ok); color:#06210f; }
   .b-guard { background:var(--card2); color:var(--txt); border:1px solid var(--line); }
@@ -52,18 +68,49 @@ export function paginaHtml(): string {
   <h1>💼 Mis chambas</h1>
   <div class="sub">Ofertas encontradas para ti · marca las que postules o descarta las que no.</div>
   <div class="tabs" id="tabs"></div>
+  <div class="buscador">
+    <input id="buscador" type="search" placeholder="🔍 Buscar por título, empresa, skill..."
+           oninput="setBuscar(this.value)" autocomplete="off">
+    <span class="cont" id="contador"></span>
+    <select id="orden" class="sel-orden" onchange="setOrden(this.value)" title="Ordenar la lista">
+      <option value="puntaje">Mejor calce</option>
+      <option value="reciente">Más recientes</option>
+      <option value="titulo">Título A-Z</option>
+      <option value="empresa">Empresa A-Z</option>
+    </select>
+    <a class="btn-excel" href="/api/exportar" title="Descargar Excel con todas tus ofertas">⬇ Excel</a>
+  </div>
 </header>
 <main id="lista"></main>
 
 <script>
-const ESTADOS = [
-  { k:'nueva',      etiqueta:'✨ Nuevas' },
-  { k:'guardada',   etiqueta:'⭐ Guardadas' },
-  { k:'postulada',  etiqueta:'✅ Postuladas' },
-  { k:'descartada', etiqueta:'🗑️ Descartadas' },
+// Las ofertas "nuevas" se parten en DOS pestañas segun su puntaje: las que de
+// verdad calzan y las genéricas (título de desarrollo pero sin skills concretas,
+// porque el portal solo mostraba un resumen corto). Así no se pierde ninguna pero
+// la lista principal queda revisable.
+const UMBRAL_BUENAS = 3;
+const VISTAS = [
+  { k:'nueva',      etiqueta:'✨ Nuevas',       ok:o => o.estado==='nueva' && o.puntaje >= UMBRAL_BUENAS },
+  { k:'otras',      etiqueta:'📋 Otras nuevas', ok:o => o.estado==='nueva' && o.puntaje <  UMBRAL_BUENAS },
+  { k:'guardada',   etiqueta:'⭐ Guardadas',    ok:o => o.estado==='guardada' },
+  { k:'postulada',  etiqueta:'✅ Postuladas',   ok:o => o.estado==='postulada' },
+  { k:'descartada', etiqueta:'🗑️ Descartadas', ok:o => o.estado==='descartada' },
 ];
 let todas = [];
 let filtro = 'nueva';
+let texto = ''; // lo que se escribe en el buscador
+let orden = 'puntaje';
+
+// "hace 3 días", "hoy", etc. a partir de una fecha ISO.
+function fechaRelativa(iso) {
+  if (!iso) return '';
+  const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (dias <= 0) return 'hoy';
+  if (dias === 1) return 'ayer';
+  if (dias < 30) return 'hace ' + dias + ' días';
+  const meses = Math.floor(dias / 30);
+  return 'hace ' + meses + (meses === 1 ? ' mes' : ' meses');
+}
 
 async function cargar() {
   const r = await fetch('/api/ofertas');
@@ -77,7 +124,24 @@ async function accion(id, estado) {
     body: JSON.stringify({ id, estado })
   });
   const o = todas.find(x => x.id === id);
-  if (o) o.estado = estado;
+  if (o) { o.estado = estado; o.visitada = false; }
+  render();
+}
+
+// "Visitar oferta": abre el aviso en otra pestaña y deja la oferta marcada como
+// visitada, para que al volver al panel aparezca el "¿Postulaste?".
+async function visitar(id, url) {
+  window.open(url, '_blank');
+  await setVisitada(id, true);
+}
+
+async function setVisitada(id, val) {
+  await fetch('/api/visitar', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ id, visitada: val })
+  });
+  const o = todas.find(x => x.id === id);
+  if (o) o.visitada = val;
   render();
 }
 
@@ -87,51 +151,107 @@ function tarjeta(o) {
   const skills = (o.coincidencias||[]).map(s => '<span class="chip skill">'+esc(s)+'</span>').join('');
   const remoto = o.remoto ? '<span class="chip remoto">Remoto</span>' : '';
   const salario = o.salario ? '<span class="chip">'+esc(o.salario)+'</span>' : '';
+  // Búsqueda en Google: título entre comillas + empresa (sin repetir la empresa
+  // cuando viene igual al título, si no la búsqueda no encuentra nada).
+  const emp = (o.empresa && o.empresa.toLowerCase() !== o.titulo.toLowerCase()) ? ' ' + o.empresa : '';
+  const googleUrl = 'https://www.google.com/search?q=' + encodeURIComponent('"' + o.titulo + '"' + emp);
+  // Computrabajo bloquea el link directo a la oferta (403 anti-bot). Entrando por
+  // SU buscador sí funciona, así que "Visitar oferta" abre su listado por título.
+  // (solo las primeras palabras: con el título completo el listado sale vacío)
+  const slugCt = o.titulo.toLowerCase()
+    .normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    .split('-').filter(Boolean).slice(0, 4).join('-');
+  const abrirUrl = (o.fuente === 'computrabajo')
+    ? 'https://cl.computrabajo.com/trabajo-de-' + slugCt
+    : o.url;
   let acciones = '';
   if (o.estado === 'nueva' || o.estado === 'guardada') {
-    acciones =
-      '<button class="b-post" onclick="postular(\\''+o.id+'\\',\\''+esc(o.url)+'\\')">Postular ↗</button>' +
-      (o.estado==='nueva' ? '<button class="b-guard" onclick="accion(\\''+o.id+'\\',\\'guardada\\')">⭐ Guardar</button>' : '') +
-      '<button class="b-desc" onclick="accion(\\''+o.id+'\\',\\'descartada\\')">Descartar</button>';
+    if (o.visitada) {
+      // Ya abrió la oferta → le preguntamos si postuló.
+      acciones =
+        '<span class="pregunta">¿Postulaste a esta oferta?</span>' +
+        '<button class="b-post" onclick="accion(\\''+o.id+'\\',\\'postulada\\')">✅ Sí, guardar postulación</button>' +
+        '<button class="b-desc" onclick="accion(\\''+o.id+'\\',\\'descartada\\')">🗑️ No, descartar</button>' +
+        '<button class="b-volver" onclick="setVisitada(\\''+o.id+'\\',false)">↩ aún no decido</button>';
+    } else {
+      acciones =
+        '<button class="b-post" onclick="visitar(\\''+o.id+'\\',\\''+esc(abrirUrl)+'\\')">🔗 Visitar oferta ↗</button>' +
+        (o.estado==='nueva' ? '<button class="b-guard" onclick="accion(\\''+o.id+'\\',\\'guardada\\')">⭐ Guardar</button>' : '') +
+        '<button class="b-desc" onclick="accion(\\''+o.id+'\\',\\'descartada\\')">Descartar</button>';
+    }
   } else {
-    acciones = '<button class="b-volver" onclick="accion(\\''+o.id+'\\',\\'nueva\\')">↩ Volver a nuevas</button>' +
-      '<a class="link" href="'+esc(o.url)+'" target="_blank" style="align-self:center">ver oferta ↗</a>';
+    // En Postuladas dejamos botar la oferta si al revisar el aviso no cumple.
+    const btnDesc = (o.estado === 'postulada')
+      ? '<button class="b-desc" onclick="accion(\\''+o.id+'\\',\\'descartada\\')">🗑️ No cumple, descartar</button>'
+      : '';
+    acciones = btnDesc +
+      '<button class="b-volver" onclick="accion(\\''+o.id+'\\',\\'nueva\\')">↩ Volver a nuevas</button>' +
+      '<a class="link" href="'+esc(abrirUrl)+'" target="_blank" style="align-self:center">ver oferta ↗</a>';
   }
+  const vista = o.encontrada_en ? '<div class="fecha">🕘 en tu lista ' + fechaRelativa(o.encontrada_en) + '</div>' : '';
+  // Salvavidas universal: buscar el aviso en Google por título + empresa.
+  const google = '<a class="link-google" target="_blank" href="'+googleUrl+'">🔍 Google</a>';
   return '<div class="card">' +
     '<div class="top"><div>' +
       '<p class="titulo">'+esc(o.titulo)+'</p>' +
       '<p class="empresa">'+esc(o.empresa)+' · '+esc(o.ubicacion)+'</p>' +
-    '</div><div class="score">'+o.puntaje+'<small>puntaje</small></div></div>' +
+    '</div><div class="score">'+o.puntaje+'<small>puntaje</small>'+vista+'</div></div>' +
     '<div class="meta"><span class="chip fuente">'+esc(o.fuente)+'</span>'+remoto+salario+skills+'</div>' +
     '<div class="desc">'+esc((o.descripcion||'').slice(0,320))+'</div>' +
-    '<div class="acciones">'+acciones+'</div>' +
+    '<div class="acciones">'+acciones+google+'</div>' +
   '</div>';
-}
-
-function postular(id, url) {
-  window.open(url, '_blank');
-  accion(id, 'postulada');
 }
 
 function render() {
   // pestañas con conteo
-  document.getElementById('tabs').innerHTML = ESTADOS.map(e => {
-    const n = todas.filter(o => o.estado === e.k).length;
+  document.getElementById('tabs').innerHTML = VISTAS.map(e => {
+    const n = todas.filter(e.ok).length;
     return '<div class="tab '+(filtro===e.k?'activo':'')+'" onclick="setFiltro(\\''+e.k+'\\')">'+
       e.etiqueta+' <span class="n">'+n+'</span></div>';
   }).join('');
 
-  const items = todas.filter(o => o.estado === filtro);
+  const vista = VISTAS.find(v => v.k === filtro) || VISTAS[0];
+  let items = todas.filter(vista.ok);
+  // Filtro de texto del buscador (título, empresa, ubicación, skills, fuente).
+  if (texto) {
+    items = items.filter(o => {
+      const heno = (o.titulo+' '+o.empresa+' '+o.ubicacion+' '+(o.coincidencias||[]).join(' ')+' '+o.fuente).toLowerCase();
+      return heno.includes(texto);
+    });
+  }
+  // Orden elegido en el selector. "Más recientes" en Postuladas usa la fecha en que
+  // postulaste; en el resto, cuándo entró la oferta a tu lista.
+  const fechaDe = o => (filtro === 'postulada' ? (o.actualizada_en || '') : (o.encontrada_en || ''));
+  if (orden === 'reciente') items.sort((a, b) => fechaDe(b).localeCompare(fechaDe(a)));
+  else if (orden === 'titulo') items.sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '', 'es'));
+  else if (orden === 'empresa') items.sort((a, b) => (a.empresa || '').localeCompare(b.empresa || '', 'es'));
+  else items.sort((a, b) => b.puntaje - a.puntaje);
+
+  const contador = document.getElementById('contador');
+  contador.textContent = texto ? items.length + ' resultado(s) para "' + texto + '"' : '';
+
   const lista = document.getElementById('lista');
   if (!items.length) {
-    lista.innerHTML = '<div class="vacio">No hay ofertas aquí.<br>' +
-      (filtro==='nueva' ? 'Corre <b>npm run buscar</b> en la terminal para traer nuevas.' : '') + '</div>';
+    const msg = texto
+      ? 'Nada coincide con "' + esc(texto) + '" en esta pestaña.'
+      : 'No hay ofertas aquí.<br>' + (filtro==='nueva' ? 'Corre <b>npm run buscar</b> en la terminal, o mira la pestaña <b>Otras nuevas</b>.' : '');
+    lista.innerHTML = '<div class="vacio">'+msg+'</div>';
     return;
   }
   lista.innerHTML = items.map(tarjeta).join('');
 }
 
-function setFiltro(k){ filtro = k; render(); }
+function setFiltro(k){
+  filtro = k;
+  // En Postuladas conviene ver primero lo último que postulaste.
+  orden = (k === 'postulada') ? 'reciente' : 'puntaje';
+  const sel = document.getElementById('orden');
+  if (sel) sel.value = orden;
+  render();
+}
+function setOrden(v){ orden = v; render(); }
+function setBuscar(v){ texto = (v||'').trim().toLowerCase(); render(); }
 cargar();
 </script>
 </body>
