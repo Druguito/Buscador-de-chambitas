@@ -1,0 +1,31 @@
+name: CI
+
+# Corre en cada push y en cada pull request a main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # `npm ci` instala exactamente lo del package-lock (más rápido y reproducible).
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Revisar tipos
+        run: npx tsc --noEmit
+
+      # Los tests no tocan la red ni los datos reales: usan el perfil "__test".
+      - name: Correr tests
+        run: npm test

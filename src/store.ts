@@ -32,8 +32,10 @@ export function claveContenido(titulo: string, empresa: string): string {
       .toLowerCase()
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '') // tildes
-      .replace(/[^a-z0-9]+/g, ' ')     // símbolos → espacio
-      .trim();
+      // Fuera TODO lo que no sea letra o número, sin dejar espacio: así
+      // "Acme S.A." y "ACME SA" quedan iguales (antes daban "acme s a" vs
+      // "acme sa" y la misma empresa no se detectaba como duplicada).
+      .replace(/[^a-z0-9]+/g, '');
   return `${norm(titulo)}|${norm(empresa)}`;
 }
 

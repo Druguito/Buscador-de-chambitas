@@ -7,10 +7,6 @@ marcar cuáles ya postulaste. **Sin APIs de pago, sin base de datos, sin Docker.
 
 1. `npm run buscar` → entra a las páginas, trae ofertas, las filtra por tus
    palabras clave y guarda las **nuevas** en `data/ofertas.json`.
-
-   (cd C:\Users\Desarrollo-01\Documents\mati\Buscador-de-chambitas
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned   # solo la 1ra vez, pones S
-npm run buscar)
 2. `npm run panel` → abre una página web local donde ves las ofertas y las
    marcas: **Postular** (abre el link y la marca como postulada), **Guardar** o
    **Descartar**. Lo que descartas o postulas no vuelve a salir en "Nuevas".
@@ -44,7 +40,24 @@ Edita **`profile.yaml`** (no necesitas tocar código):
 | Computrabajo  | Navegador | ✅ Funciona (mucha oferta en Chile).              |
 | ChileTrabajos | Navegador | ⚠️ Funciona pero su buscador es impreciso; el filtro limpia el ruido. |
 | Trabajando.com | Navegador | ✅ Funciona (oferta local en Chile).             |
+| Trabajo.org   | Navegador | ✅ Agregador con mucha oferta de todo Chile. Hay que buscar por su formulario (bloquea la URL directa). |
+| Laborum       | Navegador | ✅ Funciona (grupo Bumeran).                      |
+| beBee         | Navegador | ✅ Agregador. Es el que trae descripciones más largas, así que matchea mejor. |
 | LinkedIn      | Web pública (endpoint jobs-guest, sin login) | ✅ Funciona y trae ofertas muy relevantes. Ojo: si lo corres muchas veces seguidas te puede dar error 429 (LinkedIn limita peticiones). Para un par de corridas al día, va bien. |
+
+> **Facebook Marketplace / login en LinkedIn:** descartados a propósito. No tienen
+> puerta pública y habría que usar tu cuenta real, que esas plataformas banean si
+> detectan automatización. Si un portal solo funciona con login, no se usa.
+
+## Tests
+
+```powershell
+npm test
+```
+
+Cubren lo que no depende de internet: el filtrado y puntaje (`match.ts`) y el
+guardado/deduplicación (`store.ts`). No tocan tu lista real — usan un perfil
+`__test` aparte. Corren solos en cada push con GitHub Actions.
 
 ## Perfiles múltiples (opcional, tipo "por usuario")
 
