@@ -22,6 +22,23 @@ Corres `buscar` cada cierto tiempo y solo te aparecen las que no habías visto.
 Eso instala dependencias y crea tu `profile.yaml`. No descarga ningún navegador:
 usa el **Edge o Chrome** que ya tienes en Windows.
 
+### Si PowerShell no te deja correr npm
+
+Si al correr `npm` te sale *"la ejecución de scripts está deshabilitada en este
+sistema"*, es porque Windows viene con los scripts bloqueados y `npm` en Windows
+es un script (`npm.ps1`). Dos salidas:
+
+```powershell
+# A) Sin cambiar nada: usa la versión .cmd
+npm.cmd run buscar
+
+# B) Arreglo definitivo (solo tu usuario, no necesita admin). Confirma con S:
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+`RemoteSigned` deja correr scripts locales como npm, pero sigue exigiendo firma a
+los que vengan de internet. Es el nivel que Microsoft recomienda para desarrollo.
+
 ## Configurar qué buscas
 
 Edita **`profile.yaml`** (no necesitas tocar código):

@@ -82,6 +82,11 @@ puerto fijo 4321, así que se usa **un panel a la vez** (no dos perfiles en para
   (Laborum, Computrabajo) muestran un resumen corto sin stack, y un aviso perfecto
   como "Desarrollador Full Stack Junior" sacaba 0 puntos y se botaba. Con las
   palabras de rol pasó de botar 48 de 90 a botar 0.
+  **Cuidado con skills de 2-3 letras o que sean palabras comunes en español.**
+  Ejemplo medido: poner `TI` daba 136 matches sobre 2.412 ofertas, pero 107 eran el
+  pronombre "ti" ("este desafío es para ti"), no informática. Para esos casos usar
+  la forma compuesta (`Soporte TI`, `Ingeniero TI`), que es inequívoca. El matcher
+  soporta frases de varias palabras.
   **`evitar` mira SOLO el título del cargo** (a propósito): cuando revisaba todo el
   aviso botaba chambas buenas ("Desarrollador Back-end Junior") solo porque la
   descripción mencionaba de pasada "el área comercial". No volver a aplicarlo al cuerpo.

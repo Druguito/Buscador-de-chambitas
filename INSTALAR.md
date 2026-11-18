@@ -109,6 +109,14 @@ Y eso es todo. Cuando quieras ver si hay nuevas, corres `npm run buscar` otra ve
 
 - **"npm no se reconoce como un comando"** → no quedó instalado Node (Paso 1) o no
   reiniciaste PowerShell. Cierra y abre PowerShell de nuevo.
+- **"la ejecución de scripts está deshabilitada en este sistema"** → Windows viene
+  con los scripts bloqueados, y `npm` en Windows es un script. Escribe esto una vez
+  y confirma con **S**:
+  ```powershell
+  Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+  ```
+  (Solo afecta tu usuario y no necesita permisos de administrador.) Si prefieres no
+  cambiar nada, usa `npm.cmd run buscar` en lugar de `npm run buscar`.
 - **"No encontré profile.yaml"** → te saltaste el Paso 5. Copia
   `profile.example.yaml` a `profile.yaml`.
 - **No aparece ninguna oferta** → tus `busquedas`/`skills` son muy específicas, o
